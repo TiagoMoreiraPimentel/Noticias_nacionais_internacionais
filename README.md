@@ -1,21 +1,22 @@
-# 🗺️ Mapa de Sites de Notícias — Nacionais × Internacionais
+# 🗺️ Mapa de Sites de Notícias — Brasil × Global
 
-Curadoria de fontes confiáveis, divididas por **blocos (Nacionais e Internacionais)** e por **categorias**: geral, economia, tecnologia, cibersegurança/incidentes, ciência, investigativo, checagem de fatos e clima/ambiente.
+Curadoria de fontes confiáveis, divididas por **blocos (Brasil e Global)** e por **categorias**: geral, economia, tecnologia, cibersegurança/incidentes, ciência, investigativo, checagem de fatos e clima/ambiente.
 
 > **Objetivo:** facilitar consulta rápida e reduzir ruído informacional. Sinta-se livre para abrir PRs adicionando fontes bem justificadas.
 
 ---
 
 ## Índice
-- [Nacionais (Brasil & Portugal)](#-nacionais-brasil--portugal)
-- [Internacionais](#-internacionais)
+- [Brasil](#-brasil)
+- [Global](#-global)
+- [Funcionalidades](#funcionalidades)
 - [Como contribuir](#como-contribuir)
 - [Formato das contribuições](#formato-das-contribuições)
 - [Licença](#licença)
 
 ---
 
-## 🇧🇷 Nacionais (Brasil & Portugal)
+## 🇧🇷 Brasil
 
 ### Geral de referência
 - [G1](https://g1.globo.com) — portal da Globo, ampla cobertura nacional e internacional
@@ -23,7 +24,6 @@ Curadoria de fontes confiáveis, divididas por **blocos (Nacionais e Internacion
 - [Estadão](https://www.estadao.com.br) — política, economia, opinião
 - [O Globo](https://oglobo.globo.com) — reportagens e análises
 - [UOL Notícias](https://noticias.uol.com.br) — geral, colunas e especiais
-- **Portugal:** [Público](https://www.publico.pt), [Expresso](https://expresso.pt), [Diário de Notícias](https://www.dn.pt)
 
 ### Economia & negócios
 - [Valor Econômico](https://valor.globo.com) — mercado e finanças
@@ -35,7 +35,6 @@ Curadoria de fontes confiáveis, divididas por **blocos (Nacionais e Internacion
 - [Canaltech](https://canaltech.com.br) — reviews, mobile, ciência
 - [Olhar Digital](https://olhardigital.com.br) — tecnologia e cultura digital
 - [Adrenaline](https://adrenaline.com.br) — hardware e games
-- **Portugal:** [Pplware](https://pplware.sapo.pt)
 
 ### Startups & inovação
 - [Startups.com.br](https://startups.com.br) — ecossistema e venture capital
@@ -68,7 +67,7 @@ Curadoria de fontes confiáveis, divididas por **blocos (Nacionais e Internacion
 
 ---
 
-## 🌍 Internacionais
+## 🌍 Global
 
 ### Geral de referência
 - [BBC News](https://www.bbc.com/news) — cobertura global
@@ -137,3 +136,36 @@ Curadoria de fontes confiáveis, divididas por **blocos (Nacionais e Internacion
 ### Agregadores úteis
 - [Techmeme](https://www.techmeme.com) — o essencial de tecnologia em uma página
 - [Hacker News](https://news.ycombinator.com) — curadoria da comunidade dev/tech
+
+---
+
+## Funcionalidades
+
+O mapa agora inclui uma interface web com as seguintes funcionalidades:
+
+- **Busca em tempo real**: Digite no campo de busca para filtrar sites e categorias.
+- **Favoritos**: Clique no botão de estrela (☆) para adicionar ou remover sites dos favoritos. Os favoritos são salvos localmente no seu navegador.
+- **Tema claro/escuro**: Alterne entre os modos claro e escuro com o botão "Tema".
+- **Design responsivo**: Adaptado para desktop e mobile.
+
+### Como usar a interface
+
+1. **Busca**: Use o campo de busca no topo para encontrar sites específicos. Para limpar a busca, clique no "✕" ou apague o texto.
+2. **Favoritos**: Clique no botão "Favoritos" para ver apenas os sites que você marcou. Clique novamente para voltar à visualização completa.
+3. **Tema**: Clique no botão "Tema" para alternar entre claro e escuro.
+
+---
+
+## Como contribuir
+
+1. Faça um fork do repositório.
+2. Adicione suas sugestões de fontes, seguindo o formato abaixo.
+3. Abra um Pull Request com uma breve descrição da fonte e justificativa.
+
+## Formato das contribuições
+
+Para adicionar uma nova fonte, inclua:
+
+- Nome do site (com link)
+- Breve descrição (opcional)
+- Categoria (geral, economia, tecnologia, etc.)
