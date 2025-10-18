@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mapa de Sites de Notícias — Brasil x Global</title>
+<style>
+  :root{
+    --bg:#0b0f14;            /* azul-noite */
+    --panel:#0f1620;         /* painel */
+    --ink:#e6f1ff;           /* texto principal */
+    --muted:#9fb0c3;         /* texto secundário */
+    --accent:#4f8cff;        /* acento */
+    --chip:#1b2330;          /* chips/cards */
+    --chip-br:#183a2a;       /* leve tin para BR */
+    --chip-int:#2a1a38;      /* leve tin para INT */
+    --br:#42d392;            /* verde nacional */
+    --int:#b480ff;           /* lilás internacional */
+    --card:#121a25;
+    --ring: 1px solid rgba(255,255,255,.06);
+    --transition: all 0.3s ease;
+  }
+  
+  /* Tema claro */
+  [data-theme="light"] {
+    --bg:#f5f7fa;
+    --panel:#ffffff;
+    --ink:#1a1a1a;
+    --muted:#5f6c80;
+    --accent:#3a7bd5;
+    --chip:#eef2f7;
+    --chip-br:#e8f5e9;
+    --chip-int:#f3e5f5;
+    --br:#2e7d32;
+    --int:#7b1fa2;
+    --card:#ffffff;
+    --ring: 1px solid rgba(0,0,0,.08);
+  }
+  
+  *{box-sizing:border-box}
+  body{
+    margin:0; 
+    background:var(--bg); 
+    color:var(--ink); 
+    font: 16px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    transition: var(--transition);
+  }
+  
+  /* Header e controles */
+  header{
+    padding:32px 20px 20px; 
+    text-align:center;
+    position: relative;
+  }
+  header h1{margin:0 0 8px; font-weight:800; letter-spacing:.3px}
+  header p{margin:0 0 20px; color:var(--muted)}
+  
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  
+  .search-box {
+    position: relative;
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .search-box input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border-radius: 12px;
+    border: var(--ring);
+    background: var(--panel);
+    color: var(--ink);
+    font-size: 16px;
+    transition: var(--transition);
+  }
+  
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,140,255,.2);
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+  }
+  
+  .clear-search {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    display: none;
+  }
+  
+  .theme-toggle, .favorites-toggle {
+    background: var(--panel);
+    border: var(--ring);
+    border-radius: 12px;
+    color: var(--ink);
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+  }
+  
+  .theme-toggle:hover, .favorites-toggle:hover {
+    background: var(--chip);
+  }
+  
+  .wrap{max-width:1200px; margin:0 auto; padding:20px}
+  .grid{
+    display:grid; grid-template-columns:1fr; gap:20px;
+  }
+  @media (min-width: 980px){
+    .grid{grid-template-columns:1fr 1fr}
+  }
+  
+  .block{
+    border:var(--ring); 
+    background:linear-gradient(180deg, var(--panel), var(--bg)); 
+    border-radius:20px; 
+    padding:20px; 
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    transition: var(--transition);
+  }
+  
+  .block.hidden {
+    display: none;
+  }
+  
+  .block h2{display:flex; align-items:center; gap:10px; margin:0 0 16px; font-size:22px}
+  .pill{font-size:12px; padding:6px 10px; border-radius:999px; background:var(--chip); color:var(--muted); border:var(--ring)}
+  .pill.br{background:linear-gradient(90deg, var(--chip-br), transparent); color:#d8ffe8; border-color:rgba(66,211,146,.25)}
+  .pill.int{background:linear-gradient(90deg, var(--chip-int), transparent); color:#f0e5ff; border-color:rgba(180,128,255,.25)}
+  
+  .categories{display:grid; grid-template-columns:1fr; gap:14px}
+  .cat{background:var(--card); border:var(--ring); border-radius:16px; padding:14px; transition: var(--transition);}
+  .cat.hidden {display: none;}
+  
+  .cat h3{margin:0 0 10px; font-size:16px; font-weight:700; color:var(--accent)}
+  ul.sites{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr; gap:8px}
+  @media (min-width:720px){ul.sites{grid-template-columns:repeat(2, 1fr)}}
+  
+  .sites li a{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.02);
+    border:1px solid rgba(255,255,255,.06); text-decoration:none; color:var(--ink);
+    transition:.2s ease; font-weight:600; position: relative;
+  }
+  
+  [data-theme="light"] .sites li a {
+    background: rgba(0,0,0,.02);
+    border: 1px solid rgba(0,0,0,.06);
+  }
+  
+  .sites li a:hover{transform:translateY(-2px); border-color:rgba(79,140,255,.35); box-shadow:0 8px 22px rgba(79,140,255,.12)}
+  .sites small{color:var(--muted); font-weight:500}
+  
+  .external-icon {
+    opacity: 0.7;
+    font-size: 14px;
+  }
+  
+  .favorite-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition);
+  }
+  
+  .favorite-btn:hover {
+    color: var(--accent);
+  }
+  
+  .favorite-btn.active {
+    color: #ffcc00;
+  }
+  
+  .favorites-section {
+    margin-bottom: 30px;
+    display: none;
+  }
+  
+  .favorites-section.active {
+    display: block;
+  }
+  
+  .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    display: none;
+  }
+  
+  .no-results.active {
+    display: block;
+  }
+  
+  footer{color:var(--muted); text-align:center; padding:24px; font-size:13px}
+  
+  /* Animações */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease forwards;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Mapa de Sites de Notícias — Brasil × Global</h1>
+    <p>Navegue por categorias: geral, economia, tecnologia, incidentes, ciência, investigativo, checagem e clima.</p>
+    
+    <div class="controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Buscar site ou categoria...">
+        <button class="clear-search" id="clearSearch">✕</button>
+      </div>
+      <button class="theme-toggle" id="themeToggle">
+        <span class="theme-icon">🌙</span> Tema
+      </button>
+      <button class="favorites-toggle" id="favoritesToggle">
+        <span class="favorite-icon">★</span> Favoritos
+      </button>
+    </div>
+  </header>
+  
+  <div class="wrap">
+    <!-- Seção de Favoritos -->
+    <section class="favorites-section block" id="favoritesSection" aria-labelledby="favoritesTitle">
+      <h2 id="favoritesTitle">⭐ Seus Favoritos</h2>
+      <div class="categories" id="favoritesContainer">
+        <!-- Os favoritos serão inseridos aqui via JavaScript -->
+      </div>
+    </section>
+    
+    <!-- Mensagem de nenhum resultado -->
+    <div class="no-results" id="noResults">
+      <p>Nenhum resultado encontrado para sua busca.</p>
+    </div>
+    
+    <div class="grid">
+      <!-- BRASIL -->
+      <section class="block" aria-labelledby="brasil" data-type="national">
+        <h2 id="brasil">🇧🇷 Brasil <span class="pill br">Sites brasileiros</span></h2>
+        <div class="categories">
+          <div class="cat" data-category="geral">
+            <h3>Geral de referência</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://g1.globo.com" data-name="G1" data-url="https://g1.globo.com">
+                  G1 <small>Portal da Globo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.folha.uol.com.br" data-name="Folha de S.Paulo" data-url="https://www.folha.uol.com.br">
+                  Folha de S.Paulo <small>Política & sociedade</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.estadao.com.br" data-name="Estadão" data-url="https://www.estadao.com.br">
+                  Estadão <small>Política & economia</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://oglobo.globo.com" data-name="O Globo" data-url="https://oglobo.globo.com">
+                  O Globo <small>Reportagens & análises</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://noticias.uol.com.br" data-name="UOL Notícias" data-url="https://noticias.uol.com.br">
+                  UOL Notícias <small>Geral & colunas</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="economia">
+            <h3>Economia & negócios</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://valor.globo.com" data-name="Valor Econômico" data-url="https://valor.globo.com">
+                  Valor Econômico <small>Mercado</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://braziljournal.com" data-name="Brazil Journal" data-url="https://braziljournal.com">
+                  Brazil Journal <small>Negócios</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://exame.com" data-name="Exame" data-url="https://exame.com">
+                  Exame <small>Gestão & investimentos</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="tecnologia">
+            <h3>Tecnologia</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://tecnoblog.net" data-name="Tecnoblog" data-url="https://tecnoblog.net">
+                  Tecnoblog <small>Notícias & análises</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://canaltech.com.br" data-name="Canaltech" data-url="https://canaltech.com.br">
+                  Canaltech <small>Reviews & ciência</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://olhardigital.com.br" data-name="Olhar Digital" data-url="https://olhardigital.com.br">
+                  Olhar Digital <small>Tech & cultura</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://adrenaline.com.br" data-name="Adrenaline" data-url="https://adrenaline.com.br">
+                  Adrenaline <small>Hardware & games</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="startups">
+            <h3>Startups & inovação</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://startups.com.br" data-name="Startups.com.br" data-url="https://startups.com.br">
+                  Startups.com.br <small>Ecossistema</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://revistapegn.globo.com" data-name="PEGN" data-url="https://revistapegn.globo.com">
+                  PEGN <small>Empreendedorismo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://neofeed.com.br" data-name="NeoFeed" data-url="https://neofeed.com.br">
+                  NeoFeed <small>Negócios & tech</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ciberseguranca">
+            <h3>Cibersegurança & incidentes</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://thehack.com.br" data-name="The Hack" data-url="https://thehack.com.br">
+                  The Hack <small>Segurança & vazamentos</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.cisoadvisor.com.br" data-name="CISO Advisor" data-url="https://www.cisoadvisor.com.br">
+                  CISO Advisor <small>Segurança corporativa</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://cert.br" data-name="CERT.br" data-url="https://cert.br">
+                  CERT.br <small>Estatísticas & guias</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.gov.br/ctir" data-name="CTIR Gov" data-url="https://www.gov.br/ctir">
+                  CTIR Gov <small>Alertas oficiais</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ciencia">
+            <h3>Ciência & saúde</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://agencia.fapesp.br" data-name="Agência FAPESP" data-url="https://agencia.fapesp.br">
+                  Agência FAPESP <small>Pesquisa</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://revistapesquisa.fapesp.br" data-name="Pesquisa FAPESP" data-url="https://revistapesquisa.fapesp.br">
+                  Pesquisa FAPESP <small>Reportagens</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://portal.fiocruz.br/noticias" data-name="Fiocruz Notícias" data-url="https://portal.fiocruz.br/noticias">
+                  Fiocruz Notícias <small>Saúde pública</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="investigativo">
+            <h3>Investigativo & dados</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://apublica.org" data-name="Agência Pública" data-url="https://apublica.org">
+                  Agência Pública <small>Investigativo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.nexojornal.com.br" data-name="Nexo Jornal" data-url="https://www.nexojornal.com.br">
+                  Nexo Jornal <small>Contexto & dados</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.abraji.org.br/noticias" data-name="Abraji" data-url="https://www.abraji.org.br/noticias">
+                  Abraji <small>Transparência</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="checagem">
+            <h3>Checagem de fatos</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.aosfatos.org" data-name="Aos Fatos" data-url="https://www.aosfatos.org">
+                  Aos Fatos <small>Fact-checking</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://piaui.folha.uol.com.br/lupa/" data-name="Agência Lupa" data-url="https://piaui.folha.uol.com.br/lupa/">
+                  Agência Lupa <small>Verificação</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ambiente">
+            <h3>Ambiente & clima</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://oeco.org.br" data-name="((o))eco" data-url="https://oeco.org.br">
+                  ((o))eco <small>Conservação</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.oc.eco.br" data-name="Observatório do Clima" data-url="https://www.oc.eco.br">
+                  Observatório do Clima <small>Políticas climáticas</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- GLOBAL -->
+      <section class="block" aria-labelledby="global" data-type="international">
+        <h2 id="global">🌍 Global <span class="pill int">Sites internacionais</span></h2>
+        <div class="categories">
+          <div class="cat" data-category="geral">
+            <h3>Geral de referência</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.bbc.com/news" data-name="BBC News" data-url="https://www.bbc.com/news">
+                  BBC News <small>Global</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.reuters.com" data-name="Reuters" data-url="https://www.reuters.com">
+                  Reuters <small>Agência</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://apnews.com" data-name="Associated Press" data-url="https://apnews.com">
+                  Associated Press <small>Breaking news</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.theguardian.com/international" data-name="The Guardian" data-url="https://www.theguardian.com/international">
+                  The Guardian <small>Investigativo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.aljazeera.com" data-name="Al Jazeera English" data-url="https://www.aljazeera.com">
+                  Al Jazeera English <small>Oriente Médio & mundo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.dw.com" data-name="DW" data-url="https://www.dw.com">
+                  DW <small>Europa & global</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.lemonde.fr" data-name="Le Monde" data-url="https://www.lemonde.fr">
+                  Le Monde <small>França</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://elpais.com" data-name="El País" data-url="https://elpais.com">
+                  El País <small>Espanha/LatAm</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.nytimes.com" data-name="The New York Times" data-url="https://www.nytimes.com">
+                  The New York Times <small>EUA</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.washingtonpost.com" data-name="The Washington Post" data-url="https://www.washingtonpost.com">
+                  The Washington Post <small>EUA</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="economia">
+            <h3>Economia & finanças</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.ft.com" data-name="Financial Times" data-url="https://www.ft.com">
+                  Financial Times <small>Mercados</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.bloomberg.com" data-name="Bloomberg" data-url="https://www.bloomberg.com">
+                  Bloomberg <small>Negócios & dados</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.economist.com" data-name="The Economist" data-url="https://www.economist.com">
+                  The Economist <small>Análises</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="tecnologia">
+            <h3>Tecnologia</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.theverge.com" data-name="The Verge" data-url="https://www.theverge.com">
+                  The Verge <small>Cultura digital</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.wired.com" data-name="Wired" data-url="https://www.wired.com">
+                  Wired <small>Tech & sociedade</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://arstechnica.com" data-name="Ars Technica" data-url="https://arstechnica.com">
+                  Ars Technica <small>Profundo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.engadget.com" data-name="Engadget" data-url="https://www.engadget.com">
+                  Engadget <small>Gadgets</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.cnet.com" data-name="CNET" data-url="https://www.cnet.com">
+                  CNET <small>Guias</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.tomshardware.com" data-name="Tom's Hardware" data-url="https://www.tomshardware.com">
+                  Tom's Hardware <small>Benchmarks</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.gsmarena.com" data-name="GSMArena" data-url="https://www.gsmarena.com">
+                  GSMArena <small>Smartphones</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.anandtech.com" data-name="AnandTech" data-url="https://www.anandtech.com">
+                  AnandTech <small>Hardcore</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.notebookcheck.net" data-name="Notebookcheck" data-url="https://www.notebookcheck.net">
+                  Notebookcheck <small>Notebooks</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="startups">
+            <h3>Startups & venture</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://techcrunch.com" data-name="TechCrunch" data-url="https://techcrunch.com">
+                  TechCrunch <small>Startups</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://venturebeat.com" data-name="VentureBeat" data-url="https://venturebeat.com">
+                  VentureBeat <small>IA & inovação</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.theinformation.com" data-name="The Information" data-url="https://www.theinformation.com">
+                  The Information <small>Negócios tech</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://sifted.eu" data-name="Sifted" data-url="https://sifted.eu">
+                  Sifted <small>Europa</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ciberseguranca">
+            <h3>Cibersegurança & incidentes</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://krebsonsecurity.com" data-name="Krebs on Security" data-url="https://krebsonsecurity.com">
+                  Krebs on Security <small>Investigativo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://thehackernews.com" data-name="The Hacker News" data-url="https://thehackernews.com">
+                  The Hacker News <small>Vulnerabilidades</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.bleepingcomputer.com" data-name="BleepingComputer" data-url="https://www.bleepingcomputer.com">
+                  BleepingComputer <small>Malware</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.darkreading.com" data-name="Dark Reading" data-url="https://www.darkreading.com">
+                  Dark Reading <small>Corporativo</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://therecord.media" data-name="The Record" data-url="https://therecord.media">
+                  The Record <small>Cibercrime & APT</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.cisa.gov/news-events/alerts" data-name="CISA Alerts" data-url="https://www.cisa.gov/news-events/alerts">
+                  CISA Alerts <small>Alertas oficiais</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://nvd.nist.gov" data-name="NVD / NIST" data-url="https://nvd.nist.gov">
+                  NVD / NIST <small>CVEs</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ciencia">
+            <h3>Ciência & pesquisa</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.nature.com" data-name="Nature" data-url="https://www.nature.com">
+                  Nature <small>Ciência de ponta</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.science.org" data-name="Science" data-url="https://www.science.org">
+                  Science <small>Pesquisas & policy</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.technologyreview.com" data-name="MIT Technology Review" data-url="https://www.technologyreview.com">
+                  MIT Technology Review <small>Tendências</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.scientificamerican.com" data-name="Scientific American" data-url="https://www.scientificamerican.com">
+                  Scientific American <small>Divulgação</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="investigativo">
+            <h3>Investigativo & dados</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.occrp.org" data-name="OCCRP" data-url="https://www.occrp.org">
+                  OCCRP <small>Crime organizado</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.icij.org" data-name="ICIJ" data-url="https://www.icij.org">
+                  ICIJ <small>Megainvestigações</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.propublica.org" data-name="ProPublica" data-url="https://www.propublica.org">
+                  ProPublica <small>Investigativo (EUA)</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="checagem">
+            <h3>Checagem de fatos</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.reuters.com/fact-check" data-name="Reuters Fact Check" data-url="https://www.reuters.com/fact-check">
+                  Reuters Fact Check <small>Global</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://apnews.com/hub/ap-fact-check" data-name="AP Fact Check" data-url="https://apnews.com/hub/ap-fact-check">
+                  AP Fact Check <small>Agência</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://www.politifact.com" data-name="PolitiFact" data-url="https://www.politifact.com">
+                  PolitiFact <small>Política (EUA)</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://fullfact.org" data-name="Full Fact" data-url="https://fullfact.org">
+                  Full Fact <small>Reino Unido</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="ambiente">
+            <h3>Ambiente & clima</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.carbonbrief.org" data-name="Carbon Brief" data-url="https://www.carbonbrief.org">
+                  Carbon Brief <small>Clima baseado em dados</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://insideclimatenews.org" data-name="Inside Climate News" data-url="https://insideclimatenews.org">
+                  Inside Climate News <small>Jornalismo ambiental</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://news.mongabay.com" data-name="Mongabay" data-url="https://news.mongabay.com">
+                  Mongabay <small>Biodiversidade</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="cat" data-category="agregadores">
+            <h3>Agregadores úteis</h3>
+            <ul class="sites">
+              <li>
+                <a target="_blank" href="https://www.techmeme.com" data-name="Techmeme" data-url="https://www.techmeme.com">
+                  Techmeme <small>Radar tech</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+              <li>
+                <a target="_blank" href="https://news.ycombinator.com" data-name="Hacker News" data-url="https://news.ycombinator.com">
+                  Hacker News <small>Comunidade dev</small>
+                </a>
+                <button class="favorite-btn" aria-label="Adicionar aos favoritos">☆</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+  <footer>Feito para consulta rápida: clique para abrir em nova aba. Atualize esta lista conforme sua curadoria evoluir.</footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementos DOM
+      const searchInput = document.getElementById('searchInput');
+      const clearSearch = document.getElementById('clearSearch');
+      const themeToggle = document.getElementById('themeToggle');
+      const favoritesToggle = document.getElementById('favoritesToggle');
+      const favoritesSection = document.getElementById('favoritesSection');
+      const favoritesContainer = document.getElementById('favoritesContainer');
+      const noResults = document.getElementById('noResults');
+      const blocks = document.querySelectorAll('.block[data-type]');
+      const categories = document.querySelectorAll('.cat');
+      const sites = document.querySelectorAll('.sites li');
+      
+      // Verificar tema salvo ou preferência do sistema
+      const savedTheme = localStorage.getItem('theme') || 
+                        (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+      
+      // Verificar favoritos salvos
+      const savedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+      updateFavoritesUI();
+      
+      // Event Listeners
+      searchInput.addEventListener('input', handleSearch);
+      clearSearch.addEventListener('click', clearSearchHandler);
+      themeToggle.addEventListener('click', toggleTheme);
+      favoritesToggle.addEventListener('click', toggleFavorites);
+      
+      // Adicionar event listeners para os botões de favorito
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('favorite-btn')) {
+          const link = e.target.parentElement.querySelector('a');
+          const name = link.getAttribute('data-name');
+          const url = link.getAttribute('data-url');
+          const category = e.target.closest('.cat').getAttribute('data-category');
+          const type = e.target.closest('.block').getAttribute('data-type');
+          
+          toggleFavorite(name, url, category, type, e.target);
+        }
+      });
+      
+      // Funções
+      function handleSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        // Mostrar/ocultar botão de limpar busca
+        if (searchTerm.length > 0) {
+          clearSearch.style.display = 'block';
+        } else {
+          clearSearch.style.display = 'none';
+        }
+        
+        if (searchTerm === '') {
+          // Mostrar tudo se a busca estiver vazia
+          showAllContent();
+          noResults.classList.remove('active');
+          return;
+        }
+        
+        let hasResults = false;
+        
+        // Buscar em sites
+        sites.forEach(site => {
+          const siteText = site.textContent.toLowerCase();
+          if (siteText.includes(searchTerm)) {
+            site.style.display = '';
+            hasResults = true;
+          } else {
+            site.style.display = 'none';
+          }
+        });
+        
+        // Mostrar/ocultar categorias baseado nos resultados
+        categories.forEach(cat => {
+          const visibleSites = cat.querySelectorAll('.sites li:not([style*="display: none"])');
+          if (visibleSites.length > 0) {
+            cat.classList.remove('hidden');
+            hasResults = true;
+          } else {
+            cat.classList.add('hidden');
+          }
+        });
+        
+        // Mostrar/ocultar blocos baseado nos resultados
+        blocks.forEach(block => {
+          const visibleCategories = block.querySelectorAll('.cat:not(.hidden)');
+          if (visibleCategories.length > 0) {
+            block.classList.remove('hidden');
+            hasResults = true;
+          } else {
+            block.classList.add('hidden');
+          }
+        });
+        
+        // Mostrar mensagem se não houver resultados
+        if (hasResults) {
+          noResults.classList.remove('active');
+        } else {
+          noResults.classList.add('active');
+        }
+      }
+      
+      function showAllContent() {
+        // Mostrar todos os elementos
+        sites.forEach(site => site.style.display = '');
+        categories.forEach(cat => cat.classList.remove('hidden'));
+        blocks.forEach(block => block.classList.remove('hidden'));
+      }
+      
+      function clearSearchHandler() {
+        searchInput.value = '';
+        clearSearch.style.display = 'none';
+        showAllContent();
+        noResults.classList.remove('active');
+      }
+      
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+      }
+      
+      function updateThemeIcon(theme) {
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        themeToggle.querySelector('span:last-child').textContent = theme === 'dark' ? ' Tema Escuro' : ' Tema Claro';
+      }
+      
+      function toggleFavorites() {
+        favoritesSection.classList.toggle('active');
+        favoritesToggle.classList.toggle('active');
+        
+        if (favoritesSection.classList.contains('active')) {
+          updateFavoritesUI();
+        }
+      }
+      
+      function toggleFavorite(name, url, category, type, button) {
+        const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        const existingIndex = favorites.findIndex(fav => fav.url === url);
+        
+        if (existingIndex !== -1) {
+          // Remover dos favoritos
+          favorites.splice(existingIndex, 1);
+          button.textContent = '☆';
+          button.classList.remove('active');
+        } else {
+          // Adicionar aos favoritos
+          favorites.push({ name, url, category, type });
+          button.textContent = '★';
+          button.classList.add('active');
+        }
+        
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        
+        // Atualizar UI se a seção de favoritos estiver visível
+        if (favoritesSection.classList.contains('active')) {
+          updateFavoritesUI();
+        }
+      }
+      
+      function updateFavoritesUI() {
+        const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+        
+        // Atualizar botões de favorito
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+          const link = btn.parentElement.querySelector('a');
+          const url = link.getAttribute('data-url');
+          const isFavorite = favorites.some(fav => fav.url === url);
+          
+          if (isFavorite) {
+            btn.textContent = '★';
+            btn.classList.add('active');
+          } else {
+            btn.textContent = '☆';
+            btn.classList.remove('active');
+          }
+        });
+        
+        // Atualizar seção de favoritos
+        if (favorites.length === 0) {
+          favoritesContainer.innerHTML = '<p>Nenhum favorito adicionado ainda.</p>';
+          return;
+        }
+        
+        // Agrupar favoritos por categoria
+        const groupedFavorites = {};
+        favorites.forEach(fav => {
+          if (!groupedFavorites[fav.category]) {
+            groupedFavorites[fav.category] = [];
+          }
+          groupedFavorites[fav.category].push(fav);
+        });
+        
+        // Construir HTML para favoritos
+        let favoritesHTML = '';
+        
+        Object.keys(groupedFavorites).forEach(category => {
+          favoritesHTML += `
+            <div class="cat">
+              <h3>${category.charAt(0).toUpperCase() + category.slice(1)}</h3>
+              <ul class="sites">
+                ${groupedFavorites[category].map(fav => `
+                  <li>
+                    <a target="_blank" href="${fav.url}" data-name="${fav.name}" data-url="${fav.url}">
+                      ${fav.name} <small>${fav.type === 'national' ? 'Brasil' : 'Global'}</small>
+                    </a>
+                    <button class="favorite-btn active" aria-label="Remover dos favoritos">★</button>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          `;
+        });
+        
+        favoritesContainer.innerHTML = favoritesHTML;
+      }
+    });
+  </script>
+</body>
+</html>
